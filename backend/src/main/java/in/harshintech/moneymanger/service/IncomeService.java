@@ -8,9 +8,15 @@ import in.harshintech.moneymanger.entity.IncomeEntity;
 import in.harshintech.moneymanger.repository.CategoryRepository;
 import in.harshintech.moneymanger.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +38,16 @@ public class IncomeService {
         newIncome = incomeRepository.save(newIncome);
         return toDTO(newIncome);
     }
+
+    //get all incomes
+    public List<IncomeDTO> getAllIncomes() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+
+        List<IncomeEntity> list = incomeRepository.findByProfileId(profile.getId());
+
+        return list.stream().map(this::toDTO).toList();
+    }
+
 
     //Retrieves all incomes for the current month/based on the startdate and end date
     public List<IncomeDTO> getCurrentMonthIncomesForCurrentUser(){
@@ -73,6 +89,51 @@ public class IncomeService {
         ProfileEntity profile = profileService.getCurrentProfile();
         List<IncomeEntity> list = incomeRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(),startDate,endDate,keyword,sort);
         return list.stream().map(this::toDTO).toList();
+    }
+
+    public byte[] generateIncomeExcel() throws IOException {
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Income");
+
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("Name");
+        header.createCell(1).setCellValue("Amount");
+        header.createCell(2).setCellValue("Date");
+        header.createCell(3).setCellValue("Category"); // 🔥 NEW
+
+        List<IncomeEntity> incomes = incomeRepository.findAll();
+
+        int rowNum = 1;
+        for (IncomeEntity income : incomes) {
+            Row row = sheet.createRow(rowNum++);
+
+            row.createCell(0).setCellValue(income.getName());
+
+            row.createCell(1).setCellValue(
+                    income.getAmount() != null ? income.getAmount().doubleValue() : 0
+            );
+
+            row.createCell(2).setCellValue(
+                    income.getDate() != null ? income.getDate().toString() : ""
+            );
+
+            row.createCell(3).setCellValue(
+                    income.getCategory() != null
+                            ? income.getCategory().getName()
+                            : "N/A"
+            );
+        }
+
+        for (int i = 0; i < 4; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        workbook.close();
+
+        return out.toByteArray();
     }
 
     //helper method

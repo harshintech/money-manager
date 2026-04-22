@@ -7,11 +7,15 @@ import in.harshintech.moneymanger.entity.ProfileEntity;
 import in.harshintech.moneymanger.repository.CategoryRepository;
 import in.harshintech.moneymanger.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.math3.analysis.function.Exp;
-import org.springframework.cglib.core.Local;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +37,13 @@ public class ExpenseService {
          ExpenseEntity newExpense = toEntity(dto,profile,category);
          newExpense = expenseRepository.save(newExpense);
          return toDTO(newExpense);
+    }
+
+    //get all expenses
+    public List<ExpenseDTO> getAllExpenses() {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<ExpenseEntity> list = expenseRepository.findByProfileId(profile.getId());
+        return list.stream().map(this::toDTO).toList();
     }
 
     //Retrieves all expenses for the current month/based on the startdate and end date
@@ -82,6 +93,52 @@ public class ExpenseService {
     public List<ExpenseDTO> getExpensesForUserOnDate(Long profileId,LocalDate date){
         List<ExpenseEntity> list = expenseRepository.findByProfileIdAndDate(profileId,date);
         return list.stream().map(this::toDTO).toList();
+    }
+
+    //email
+    public byte[] generateExpenseExcel() throws IOException, IOException {
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Expense");
+
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("Name");
+        header.createCell(1).setCellValue("Amount");
+        header.createCell(2).setCellValue("Date");
+        header.createCell(3).setCellValue("Category");
+
+        List<ExpenseEntity> expenses = expenseRepository.findAll();
+
+        int rowNum = 1;
+        for (ExpenseEntity expense : expenses) {
+            Row row = sheet.createRow(rowNum++);
+
+            row.createCell(0).setCellValue(expense.getName());
+
+            row.createCell(1).setCellValue(
+                    expense.getAmount() != null ? expense.getAmount().doubleValue() : 0
+            );
+
+            row.createCell(2).setCellValue(
+                    expense.getDate() != null ? expense.getDate().toString() : ""
+            );
+
+            row.createCell(3).setCellValue(
+                    expense.getCategory() != null
+                            ? expense.getCategory().getName()
+                            : "N/A"
+            );
+        }
+
+        for (int i = 0; i < 4; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        workbook.close();
+
+        return out.toByteArray();
     }
 
 
