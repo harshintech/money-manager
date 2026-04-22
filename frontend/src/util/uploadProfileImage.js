@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from "./apiEndPoints";
 const uploadProfileImage = async (image) => {
   const formData = new FormData();
   formData.append("file", image);
-  formData.append("upload_preset", import.meta.env.CLOUDINARY_UPLOAD_PRESET);
+  formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
   try {
     const response = await fetch(API_ENDPOINTS.UPLOAD_IMAGE, {
