@@ -71,6 +71,11 @@ const Login = () => {
         alt="Background"
         className="absolute inset-0 w-full h-full object-cover filter blur-sm"
       />
+      <p className="absolute animate-slideIn top-2 left-2 text-black m-2 text-sm text-center bg-red-400/50 p-2 rounded z-100">
+        Note: App may take 40–80 seconds to start due to free-tier hosting (cold
+        start). <br></br>If you encounter any errors during initial load, please
+        refresh the page and try again.
+      </p>
       <div className="relative z-10 w-full max-w-lg px-6">
         <div className="bg-white/30 bg-opacity-95 backdrop-blur-2xl rounded-lg shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
           <h3 className="text-2xl font-semibold text-black text-center mb-2">
