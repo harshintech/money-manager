@@ -1,6 +1,6 @@
 # 💰 Money Manager App
 
-A **production-ready full-stack finance application** with authentication, email automation, Excel export, and real-time financial insights.
+A **production-ready full-stack finance application** with authentication, email automation, Excel export, and real-time financial insights using React & Spring Boot.
 
 ---
 
